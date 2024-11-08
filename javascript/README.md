@@ -90,20 +90,7 @@ async function getJobResult(jobId, offset, limit) {
 
 	let resultUrl = `${exportUrl}/job/${jobId}/result`;
 
-	let queryString = '?';
-	if (offset >= 0) {
-		queryString = `${queryString}offset=${offset.toString()}`;
-	}
-	if (limit >= 0) {
-		if (queryString != '?') {
-			queryString = queryString + '&';
-		}
-		queryString = `${queryString}limit=${limit.toString()}`
-	}
-	if (queryString != '?') {
-		resultUrl = resultUrl + queryString;
-	}
-	console.log("#####	resultUrl:",  resultUrl);
+	console.log("#####	resultUrl:",  resultUrl, offset, limit);
 
 	try {
 		const response = await axios.get(
@@ -111,6 +98,10 @@ async function getJobResult(jobId, offset, limit) {
 			{
 				headers: {
 					'Authorization': `Bearer ${token}`
+				},
+				params: {
+					offset,
+					limit
 				}
 			}
 		);
