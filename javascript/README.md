@@ -26,9 +26,7 @@ $ node dataExportDemo.js
 
 ## Walkthrough
 
-[TODO]
-
-### First
+### dataExportDemo.js
 
 The first thing for data export is to create a data export job -
 
