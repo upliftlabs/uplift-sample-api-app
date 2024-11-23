@@ -1,129 +1,89 @@
-# Uplift Sample API App
+# Uplift Sample API App (Python Version)
 
-This is a simple demo app that shows how you can use the Uplift APIs
+This is a simple demo app that shows how you can use the Uplift APIs with Python.
 
-## Running the App
+## Prerequisites
 
-First, install dependencies using pip3 -
+### Installing Python
+
+To run this sample app, you’ll need Python installed on your system.
+
+1. **Minimum Python Version**: The application requires Python **3.8 or higher**.
+2. **Where to Download Python**:
+   - Visit the [Python official website](https://www.python.org/).
+   - Download and install the latest stable version.
+
+## Folder Structure
+
+The Python app organizes the files as follows:
+```
+python/
+├── app.py                # Main script to start the data export process
+├── api.py                # Contains functions for API interaction
+├── files.py              # Contains file handling and CSV export logic
+├── requirements.txt      # Python dependencies for the project
+└── README.md             # This file
 
 ```
-$ pip3 install aiohttp
+
+### Installing Dependencies
+
+Install the dependencies using [pip](https://pip.pypa.io/en/stable/) in this directory:
+
+```bash
+    $ pip install -r requirements.txt
 ```
 
-Next, add your own API Key and Uplift data export URL to the environment variables.
-There are a few ways to do this but the simplest would be to do it right in your shell.
+### Setting Up API Keys
+In this directory, create a file named `env.json`.
 
+```json
+   {
+     "UPLIFT_API_KEY": "your_api_key_here",
+     "UPLIFT_DATA_URL": "https://uplift_data_url"
+   }
 ```
-$ export UPLIFT_API_KEY=<key>
-$ export UPLIFT_DATA_EXPORT_UR=<url>
+### Setting the Variables
+
+Before starting the app, you need to set the following variables in the `app.py` file. These are critical for defining the data export process:
+
+1. **Categories (Activity and Movement)**: A list of activities and movements for which you want to retrieve data.
+   - Example:
+     ```python
+     categories = [
+         {"activity": "baseball", "movement": "hitting"},
+         {"activity": "baseball", "movement": "pitching"}
+     ]
+     ```
+
+2. **Time Range (Start and End Time)**: Set the start and end time in epoch format for the data you wish to retrieve.
+   - Example:
+     ```python
+     start_time = 1604807785  # 24 hours ago
+     end_time = int(time.time())  # Current time
+     ```
+
+3. **Date Mode**: Define how to filter the data. You can choose between `last_modified` or `capture_time`.
+   - Example:
+     ```python
+     date_mode = "last_modified"  # Use 'capture_time' for the actual capture time
+     ```
+
+4. **Pagination Settings**: Set the pagination parameters to control how many rows to fetch and skip.
+   - Example:
+     ```python
+     offset = 0  # Default is 0
+     limit = 500  # Maximum rows per request (default is 500)
+     ```
+
+Make sure to adjust these variables according to the data you're interested in exporting.
+
+### Starting the App
+Once you've installed the dependencies, set up the API key, and configured the variables in `app.py`, you can start the app by running the following command in your terminal:
 ```
-
-Finally, start the app using python
-
+$ python app.py
 ```
-$ python3 dataExportDemo.py
-```
-
-## Walkthrough
-
-### dataExportDemo.py
-
-The first thing for data export is to create a data export job -
-
-```python
-async def create_export_job(session, data):
-    try:
-        async with session.post(export_url, json=data, headers=headers) as response:
-            response_data = await response.json()
-            return response_data.get("jobId")
-    except Exception as e:
-        handle_error(e)
-```
-
-Next the app checks status of the newly created job -
-
-```python
-async def get_job_status(session, job_id):
-    if not job_id:
-        print("Error: jobId is required in get_job_status")
-        return None
-
-    status_url = f"{export_url}/job/{job_id}"
-
-    try:
-        async with session.get(status_url, headers=headers) as response:
-            response_data = await response.json()
-            return response_data.get("status")
-    except Exception as e:
-        handle_error(e)
-```
-
-Now we are ready to retrieve data result if the job status returned is COMPLETED -
-
-```python
-async def get_job_result(session, job_id, offset, limit):
-    if not job_id:
-        print("Error: jobId is required in get_job_result")
-        return None
-
-    result_url = f"{export_url}/job/{job_id}/result"
-    print("##### resultUrl:", result_url, offset, limit)
-    
-    params = {'offset': offset, 'limit': limit}
-
-    try:
-        async with session.get(result_url, headers=headers, params=params) as response:
-            return await response.json()
-    except Exception as e:
-        handle_error(e)
-```
-
-Finally, we can loop through the list of categories that we want to export data from and write the
-the result to files if needed -
-
-```python
-    async with aiohttp.ClientSession() as session:
-        for category in categories:
-            print("##", category["activity"], category["movement"])
-
-            job_data = {
-                "activity": category["activity"],
-                "movement": category["movement"],
-                "startTime": start_time,
-                "endTime": end_time,
-                "dateMode": date_mode
-            }
-
-            job_id = await create_export_job(session, job_data)
-            print("##### create job:", job_id)
-
-            if job_id:
-                while True:
-                    result = await get_export_data(session, job_id, offset, limit)
-                    if not result or "rows" not in result:
-                        break
-
-                    print("##### got result:", len(result["rows"]))
-
-                    # Write the result to file if needed. The format of the result:
-                    #	   {
-                    #		   "jobId": "<string>",
-                    #		   "rowCount": <int>,
-                    #		   "schema": [
-                    #			   {
-                    #				   "name": "<string>",
-                    #				   "type": {
-                    #					   "name": "<string>"
-                    #				   }
-                    #			   }
-                    #		   ],
-                    #		   "rows": [
-                    #			   {}
-                    #		   ]
-                    #	   }
-
-                    offset += len(result["rows"])
-```
+For more details on how the app works, the usage, and the output of the export process, please refer to the [Sample App Usage (NodeJS and Python)](../README.md#sample-app-usage-nodejs-and-python) section in the main `README.md`.
 
 ### More Info
-For more details, read the comments in the file
+For additional information and explanations, please refer to the comments within the files.

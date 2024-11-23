@@ -1,0 +1,20 @@
+{
+    "name": "uplift-sample-api-app",
+    "version": "1.0.0",
+    "description": "Uplift sample api app",
+    "type": "module",
+    "main": "app.js",
+    "scripts": {
+        "start": "node app.js",
+        "dev": "nodemon app.js"
+    },
+    "dependencies": {
+        "axios": "^1.7.7",
+        "csv-stringify": "^6.5.2"
+    },
+    "engines": {
+        "node": ">=16.0.0"
+    },
+    "author": "Uplift",
+    "license": "MIT"
+}

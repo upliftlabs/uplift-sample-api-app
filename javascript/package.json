@@ -1,9 +1,0 @@
-{
-    "name": "uplift-sample-api-app",
-    "version": "1.0.0",
-    "description": "Uplift sample api app",
-    "type": "module",
-    "dependencies": {
-        "axios": "^1.7.7"
-    }
-}
