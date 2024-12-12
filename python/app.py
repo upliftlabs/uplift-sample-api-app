@@ -1,6 +1,6 @@
 import time
 from files import write_csv_file, read_env_json
-from api import create_export_job, get_job_status, get_job_result, handle_error
+from api import create_export_job, get_job_status, get_job_results, handle_error
 
 
 def check_job_status(api_key, data_url, job_id):
@@ -34,7 +34,7 @@ def check_job_status(api_key, data_url, job_id):
             return True
         elif status in ('FAILED', 'CANCELED'):
             # Handle failed or canceled status as errors
-            raise Exception(f"Job {status}. Unable to retrieve result.")
+            raise Exception(f"Job {status}. Unable to retrieve results.")
         elif status == 'RUNNING':
             # Wait for a few seconds before checking status again if the job is still running
             print("Job is still running. Checking again in 5 seconds...")
@@ -58,7 +58,7 @@ def handle_data_export(api_key, data_url, job_id, offset=0, limit=500):
     Args:
         api_key (str): The API key used for authentication in the API requests.
         data_url (str): The base URL for the data source.
-        job_id (str): The job ID to fetch the result.
+        job_id (str): The job ID to fetch the results.
         offset (int, optional): The offset to use for pagination (default is 0).
         limit (int, optional): The limit of rows to fetch per API request (default is 500).
 
@@ -71,14 +71,14 @@ def handle_data_export(api_key, data_url, job_id, offset=0, limit=500):
 
     try:
         while True:
-            # Fetch the paginated result from the API
-            result = get_job_result(api_key, data_url, job_id, offset, limit)
+            # Fetch the paginated results from the API
+            results = get_job_results(api_key, data_url, job_id, offset, limit)
 
-            if not result or not result.get('rows'):
+            if not results or not results.get('rows'):
                 break  # No more rows to fetch, exit the loop
 
             # Process each row and check if the sessionId or athleteId has changed
-            for row in result['rows']:
+            for row in results['rows']:
                 current_session_id = row['sessionid']
                 current_athlete_id = row['athleteid']
 
@@ -102,7 +102,7 @@ def handle_data_export(api_key, data_url, job_id, offset=0, limit=500):
                 session_id = current_session_id
 
             # Move the offset to the next page for pagination
-            offset += len(result['rows'])
+            offset += len(results['rows'])
 
             # Pause for 1 second before making the next API request (to avoid rate-limiting)
             time.sleep(1)
@@ -140,7 +140,7 @@ def handle_export_process():
     # Mode for date filtering: "last_modified" or "capture_time"
     date_mode = "last_modified"
 
-    # Number of rows to skip for result pagination. Default is 0.
+    # Number of rows to skip for results pagination. Default is 0.
     offset = 0
 
     # Number of rows to retrieve. Maximum valid value is 500. Default is 100.
@@ -168,7 +168,7 @@ def handle_export_process():
                     handle_data_export(api_key, data_url, job_id, offset, limit)
 
         except ValueError as e:
-            # Catch any errors from createExportJob, checkJobStatus, or getJobResult
+            # Catch any errors from createExportJob, checkJobStatus, or getJobResults
             print(f"Error processing category {category['activity']} - {category['movement']}: {e}")
 
 

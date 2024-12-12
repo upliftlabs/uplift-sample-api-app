@@ -1,5 +1,5 @@
 import {readEnvJson, writeCsvFile} from "./file.js";
-import {createExportJob, getJobStatus, getJobResult} from './api.js'
+import {createExportJob, getJobStatus, getJobResults} from './api.js'
 
 
 /**
@@ -53,7 +53,7 @@ const checkJobStatus = async (apiKey, dataURL, jobId) => {
  *
  * @param {string} apiKey - The API key used for authentication in the API requests.
  * @param {string} dataURL - The base URL for the data source.
- * @param {string} jobId - The job ID to fetch the result.
+ * @param {string} jobId - The job ID to fetch the results.
  * @param {number} [offset=0] - The offset to use for pagination (default is 0).
  * @param {number} [limit=500] - The limit of rows to fetch per API request (default is 500).
  *
@@ -66,15 +66,15 @@ const handleDataExport = async (apiKey, dataURL, jobId, offset = 0, limit = 500)
 
 	try {
 		while (true) {
-			// Fetch the paginated result from the API
-			const result = await getJobResult(apiKey, dataURL, jobId, offset, limit);
+			// Fetch the paginated results from the API
+			const results = await getJobResults(apiKey, dataURL, jobId, offset, limit);
 
-			if (!result || result.rows.length === 0) {
+			if (!results || results.rows.length === 0) {
 				break; // No more rows to fetch, exit the loop
 			}
 
 			// Process each row and check if the sessionId or athleteId has changed
-			for (const row of result.rows) {
+			for (const row of results.rows) {
 				const currentSessionId = row.sessionid;
 				const currentAthleteId = row.athleteid;
 
@@ -104,7 +104,7 @@ const handleDataExport = async (apiKey, dataURL, jobId, offset = 0, limit = 500)
 			}
 
 			// Move the offset to the next page for pagination
-			offset += result.rows.length;
+			offset += results.rows.length;
 
 			// Pause for 1 second before making the next API request (to avoid rate-limiting)
 			await new Promise(resolve => setTimeout(resolve, 1000));
@@ -145,7 +145,7 @@ const handleExportProcess = async () => {
 	// Mode for date filtering: "last_modified" or "capture_time"
 	let dateMode = "last_modified";
 
-	// Number of rows to skip for result pagination. Default is 0.
+	// Number of rows to skip for results pagination. Default is 0.
 	let offset = 0;
 
 	// Number of rows to retrieve. Maximum valid value is 500. Default is 100.
@@ -175,7 +175,7 @@ const handleExportProcess = async () => {
 				}
 			}
 		} catch (error) {
-			// Catch any errors from createExportJob, checkJobStatus, or getJobResult
+			// Catch any errors from createExportJob, checkJobStatus, or getJobResults
 			console.error(`Error processing category: ${category.activity} - ${category.movement}:`, error);
 			throw error;
 		}

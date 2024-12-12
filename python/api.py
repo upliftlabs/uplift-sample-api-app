@@ -72,30 +72,30 @@ def get_job_status(api_key, data_url, job_id):
         raise
 
 
-def get_job_result(api_key, data_url, job_id, offset, limit):
+def get_job_results(api_key, data_url, job_id, offset, limit):
     """
-    Sends a GET request to the provided `data_url` to retrieve the result of the job identified by `job_id`.
+    Sends a GET request to the provided `data_url` to retrieve the results of the job identified by `job_id`.
     The request includes pagination parameters for `offset` and `limit`.
 
     Args:
         api_key (str): The API key used for authentication.
         data_url (str): The base URL of the API.
-        job_id (str): The ID of the job whose result is being retrieved.
+        job_id (str): The ID of the job whose results is being retrieved.
         offset (int): The number of rows to skip for pagination.
         limit (int): The number of rows to retrieve in the response.
 
     Returns:
-        dict: The result data of the job, including rows and metadata.
+        dict: The results data of the job, including rows and metadata.
 
     Raises:
         ValueError: If `job_id` is not provided.
-        Exception: If the result retrieval fails (e.g., network errors, invalid API key).
+        Exception: If the results retrieval fails (e.g., network errors, invalid API key).
     """
     if not job_id:
-        raise ValueError("Error: job_id is required in get_job_result")
+        raise ValueError("Error: job_id is required in get_job_results")
 
-    result_url = f"{data_url}/job/{job_id}/result"
-    print(f"Result URL: {result_url} | Offset: {offset} | Limit: {limit}")
+    results_url = f"{data_url}/job/{job_id}/results"
+    print(f"Results URL: {results_url} | Offset: {offset} | Limit: {limit}")
 
     try:
         headers = {
@@ -106,7 +106,7 @@ def get_job_result(api_key, data_url, job_id, offset, limit):
             "limit": limit
         }
 
-        response = requests.get(result_url, headers=headers, params=params)
+        response = requests.get(results_url, headers=headers, params=params)
 
         # Raise HTTPError for client/server errors
         response.raise_for_status()
@@ -140,7 +140,7 @@ def handle_error(error):
         elif status_code == 403:
             print("Forbidden: You do not have access to this resource.")
         elif status_code == 404:
-            print("Not Found: The specified job ID does not exist or has no result.")
+            print("Not Found: The specified job ID does not exist or has no results.")
         elif status_code == 429:
             print("Too Many Requests: You are being rate limited. Try again later.")
         elif status_code == 500:

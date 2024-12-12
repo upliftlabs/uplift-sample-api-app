@@ -14,7 +14,7 @@ Welcome to the Uplift API Sample Repo! This repository contains two versions of 
 
 ## Sample App Usage (NodeJS and Python)
 #### Making API Calls and Handling Pagination
-The app retrieves data from an API in paginated form. The function `getJobResult` will fetch a page of results, and pagination will continue until all data is retrieved.
+The app retrieves data from an API in paginated form. The function `getJobResults` will fetch a page of results, and pagination will continue until all data is retrieved.
 
 #### Exporting Data to CSV
 The app collects the data into CSV files. The data will be organized by athleteId and sessionId. For each combination of athleteId and sessionId, a folder will be created. If a new session starts, a new CSV file will be generated. If the session already exists, new rows will be appended to the file.

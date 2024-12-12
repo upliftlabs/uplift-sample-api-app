@@ -72,33 +72,33 @@ export const getJobStatus = async (apiKey, dataURL, jobId)  => {
 }
 
 /**
- * Function to get the result of a job
+ * Function to get the results of a job
  *
- * Sends a GET request to the provided `dataURL` to retrieve the result of the job
+ * Sends a GET request to the provided `dataURL` to retrieve the results of the job
  * identified by `jobId`. The request includes pagination parameters for `offset` and `limit`.
  *
  * @param {string} apiKey - The API key used for authentication.
- * @param {string} dataURL - The URL of the API where the job result can be fetched.
- * @param {string} jobId - The ID of the job whose result is being retrieved.
- * @param {number} offset - The number of rows to skip for result pagination.
+ * @param {string} dataURL - The URL of the API where the job results can be fetched.
+ * @param {string} jobId - The ID of the job whose results is being retrieved.
+ * @param {number} offset - The number of rows to skip for results pagination.
  * @param {number} limit - The number of rows to retrieve in the response.
  *
- * @returns {object} - The result data of the job, including rows and metadata.
+ * @returns {object} - The results data of the job, including rows and metadata.
  *
- * @throws {Error} - Throws an error if the result retrieval fails (e.g., network errors, invalid API key).
+ * @throws {Error} - Throws an error if the results retrieval fails (e.g., network errors, invalid API key).
  */
-export const getJobResult = async (apiKey, dataURL, jobId, offset, limit)  => {
+export const getJobResults = async (apiKey, dataURL, jobId, offset, limit)  => {
 	if (!jobId) {
 		console.log("Error: jobId is required in getJobStatus");
 		return;
 	}
 
-	let resultUrl = `${dataURL}/job/${jobId}/result`;
-	console.log(`resultUrl: ${resultUrl} | offset: ${offset} | limit: ${limit}`);
+	let resultsUrl = `${dataURL}/job/${jobId}/results`;
+	console.log(`resultsUrl: ${resultsUrl} | offset: ${offset} | limit: ${limit}`);
 
 	try {
 		const response = await axios.get(
-			resultUrl,
+			resultsUrl,
 			{
 				headers: {
 					'Authorization': `Bearer ${apiKey}`
@@ -141,7 +141,7 @@ function handleError(error) {
 			console.error("Forbidden: You do not have access to this resource.");
 			break;
 		case 404:
-			console.error("Not Found: The specified job ID does not exist or has no result.");
+			console.error("Not Found: The specified job ID does not exist or has no results.");
 			break;
 		case 429:
 			console.error("Too Many Requests: You are being rate limited. Try again later.");
