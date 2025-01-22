@@ -1,7 +1,7 @@
 import requests
+import time
 
-
-def create_export_job(api_key, data_url, data):
+def create_export_job(api_key, data_url, data, max_retries: int = 3, retry_delay: float = 2.0):
     """
     Sends a POST request to the provided `data_url` to initiate the export job with the given parameters.
 
@@ -9,6 +9,8 @@ def create_export_job(api_key, data_url, data):
         api_key (str): The API key used for authentication.
         data_url (str): The URL to send the POST request to.
         data (dict): The payload for the export job request (e.g., activity, movement, date range).
+        max_retries (int, optional): Maximum number of retry attempts. Defaults to 3.
+        retry_delay (float, optional): Initial delay between retries in seconds. Defaults to 2.0.
 
     Returns:
         str: The `job_id` string if the job is successfully created.
@@ -16,25 +18,39 @@ def create_export_job(api_key, data_url, data):
     Raises:
         Exception: If the job creation fails (e.g., network issues, invalid API key, etc.).
     """
-    try:
-        headers = {
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        }
 
-        response = requests.post(data_url, json=data, headers=headers)
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
 
-        # Raise HTTPError if the response contains a client or server error
-        response.raise_for_status()
+    retry_count = 0
 
-        # Extract job ID from the response
-        return response.json().get("jobId")
-    except requests.exceptions.RequestException as error:
-        handle_error(error)  # Log the error using handle_error
-        raise
+    while retry_count <= max_retries:
+        try:
+            response = requests.post(data_url, json=data, headers=headers)
+
+            # Check if it's a 504 error and we haven't exceeded max retries
+            if response.status_code == 504 and retry_count < max_retries:
+                retry_count += 1
+                print(f"Received 504 error, attempt {retry_count} of {max_retries}. Retrying in {retry_delay} seconds ...")
+
+                # Exponential backoff
+                backoff_delay = retry_delay * (2 ** (retry_count - 1))
+                time.sleep(backoff_delay)
+                continue
+
+            # If it's not a 504 error or we've exceeded retries, raise HTTPError for client/server errors
+            response.raise_for_status()
+
+            # Extract job ID from the response
+            return response.json().get("jobId")
+        except requests.exceptions.RequestException as error:
+            handle_error(error)  # Log the error using handle_error
+            raise
 
 
-def get_job_status(api_key, data_url, job_id):
+def get_job_status(api_key, data_url, job_id, max_retries: int = 3, retry_delay: float = 2.0):
     """
     Sends a GET request to the provided `data_url` to retrieve the status of the job identified by `job_id`.
 
@@ -42,6 +58,8 @@ def get_job_status(api_key, data_url, job_id):
         api_key (str): The API key used for authentication.
         data_url (str): The base URL of the API.
         job_id (str): The ID of the job whose status is being checked.
+        max_retries (int, optional): Maximum number of retry attempts. Defaults to 3.
+        retry_delay (float, optional): Initial delay between retries in seconds. Defaults to 2.0.
 
     Returns:
         str: The job's status (e.g., 'RUNNING', 'COMPLETED', 'FAILED').
@@ -55,24 +73,37 @@ def get_job_status(api_key, data_url, job_id):
 
     status_url = f"{data_url}/job/{job_id}"
 
-    try:
-        headers = {
-            "Authorization": f"Bearer {api_key}"
-        }
+    headers = {
+        "Authorization": f"Bearer {api_key}"
+    }
 
-        response = requests.get(status_url, headers=headers)
+    retry_count = 0
 
-        # Raise HTTPError for client/server errors
-        response.raise_for_status()
+    while retry_count <= max_retries:
+        try:
+            response = requests.get(status_url, headers=headers)
 
-        # Return the job status from the response
-        return response.json().get("status")
-    except requests.exceptions.RequestException as error:
-        handle_error(error)  # Log the error using handle_error
-        raise
+            # Check if it's a 504 error and we haven't exceeded max retries
+            if response.status_code == 504 and retry_count < max_retries:
+                retry_count += 1
+                print(f"Received 504 error, attempt {retry_count} of {max_retries}. Retrying in {retry_delay} seconds ...")
+
+                # Exponential backoff
+                backoff_delay = retry_delay * (2 ** (retry_count - 1))
+                time.sleep(backoff_delay)
+                continue
+
+            # If it's not a 504 error or we've exceeded retries, raise HTTPError for client/server errors
+            response.raise_for_status()
+
+            # Return the job status from the response
+            return response.json().get("status")
+        except requests.exceptions.RequestException as error:
+            handle_error(error)  # Log the error using handle_error
+            raise
 
 
-def get_job_results(api_key, data_url, job_id, offset, limit):
+def get_job_results(api_key, data_url, job_id, offset, limit, max_retries: int = 3, retry_delay: float = 2.0):
     """
     Sends a GET request to the provided `data_url` to retrieve the results of the job identified by `job_id`.
     The request includes pagination parameters for `offset` and `limit`.
@@ -83,6 +114,8 @@ def get_job_results(api_key, data_url, job_id, offset, limit):
         job_id (str): The ID of the job whose results is being retrieved.
         offset (int): The number of rows to skip for pagination.
         limit (int): The number of rows to retrieve in the response.
+        max_retries (int, optional): Maximum number of retry attempts. Defaults to 3.
+        retry_delay (float, optional): Initial delay between retries in seconds. Defaults to 2.0.
 
     Returns:
         dict: The results data of the job, including rows and metadata.
@@ -97,25 +130,38 @@ def get_job_results(api_key, data_url, job_id, offset, limit):
     results_url = f"{data_url}/job/{job_id}/results"
     print(f"Results URL: {results_url} | Offset: {offset} | Limit: {limit}")
 
-    try:
-        headers = {
-            "Authorization": f"Bearer {api_key}"
-        }
-        params = {
-            "offset": offset,
-            "limit": limit
-        }
+    headers = {
+        "Authorization": f"Bearer {api_key}"
+    }
+    params = {
+        "offset": offset,
+        "limit": limit
+    }
 
-        response = requests.get(results_url, headers=headers, params=params)
+    retry_count = 0
 
-        # Raise HTTPError for client/server errors
-        response.raise_for_status()
+    while retry_count <= max_retries:
+        try:
+            response = requests.get(results_url, headers=headers, params=params)
 
-        # Return the parsed JSON response
-        return response.json()
-    except requests.exceptions.RequestException as error:
-        handle_error(error)  # Log the error using handle_error
-        raise
+            # Check if it's a 504 error and we haven't exceeded max retries
+            if response.status_code == 504 and retry_count < max_retries:
+                retry_count += 1
+                print(f"Received 504 error, attempt {retry_count} of {max_retries}. Retrying in {retry_delay} seconds ...")
+
+                # Exponential backoff
+                backoff_delay = retry_delay * (2 ** (retry_count - 1))
+                time.sleep(backoff_delay)
+                continue
+
+            # If it's not a 504 error or we've exceeded retries, raise HTTPError for client/server errors
+            response.raise_for_status()
+
+            # Return the parsed JSON response
+            return response.json()
+        except requests.exceptions.RequestException as error:
+            handle_error(error)  # Log the error using handle_error
+            raise
 
 
 def handle_error(error):

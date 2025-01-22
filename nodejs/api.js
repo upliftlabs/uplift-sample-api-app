@@ -9,28 +9,52 @@ import axios from "axios";
  * @param {string} apiKey - The API key used for authentication.
  * @param {string} dataURL - The URL to send the POST request to.
  * @param {object} data - The payload for the export job request (e.g., activity, movement, date range).
+ * @param {number} maxRetries - Maximum number of retry attempts (default: 3)
+ * @param {number} retryDelay - Delay between retries in milliseconds (default: 2000)
  *
  * @returns {string} - The `jobId` string if the job is successfully created.
  *
  * @throws {Error} - Throws an error if the job creation fails (network issues, invalid API key, etc.).
  */
-export const createExportJob = async (apiKey, dataURL, data) => {
-	try {
-		const response = await axios.post(
-			dataURL,
-			data,
-			{
-				headers: {
-					'Authorization': `Bearer ${apiKey}`,
-					'Content-Type': 'application/json'
+export const createExportJob = async (apiKey, dataURL, data, maxRetries = 3, retryDelay = 2000) => {
+	let retryCount = 0;
+
+	const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+	const makeRequest = async () => {
+		try {
+			const response = await axios.post(
+				dataURL,
+				data,
+				{
+					headers: {
+						'Authorization': `Bearer ${apiKey}`,
+						'Content-Type': 'application/json'
+					}
 				}
+			);
+			return response.data.jobId;
+		} catch (error) {
+			// Check if it's a 504 error and we haven't exceeded max retries
+			if (error.response?.status === 504 && retryCount < maxRetries) {
+				retryCount++;
+				console.log(`Received 504 error, attempt ${retryCount} of ${maxRetries}. Retrying in ${retryDelay}ms ...`);
+
+				// Exponential backoff
+				const backoffDelay = retryDelay * Math.pow(2, retryCount - 1);
+				await delay(backoffDelay);
+
+				// Recursive retry
+				return makeRequest();
 			}
-		);
-		return response.data.jobId;
-	} catch (error) {
-		handleError(error);
-		throw error;
+
+			// If it's not a 504 error or we've exceeded retries, handle the error
+			handleError(error);
+			throw error;
+		}
 	}
+
+	return makeRequest();
 }
 
 /**
@@ -42,12 +66,14 @@ export const createExportJob = async (apiKey, dataURL, data) => {
  * @param {string} apiKey - The API key used for authentication.
  * @param {string} dataURL - The URL of the API where the job status can be checked.
  * @param {string} jobId - The ID of the job whose status is being checked.
+ * @param {number} maxRetries - Maximum number of retry attempts (default: 3)
+ * @param {number} retryDelay - Delay between retries in milliseconds (default: 2000)
  *
  * @returns {string} - The job's status (e.g., 'RUNNING', 'COMPLETED', 'FAILED').
  *
  * @throws {Error} - Throws an error if the status retrieval fails (e.g., network errors or invalid API key).
  */
-export const getJobStatus = async (apiKey, dataURL, jobId)  => {
+export const getJobStatus = async (apiKey, dataURL, jobId, maxRetries = 3, retryDelay = 2000)  => {
 	if (!jobId) {
 		console.log("Error: jobId is required in getJobStatus");
 		return;
@@ -55,20 +81,42 @@ export const getJobStatus = async (apiKey, dataURL, jobId)  => {
 
 	const statusUrl = `${dataURL}/job/${jobId}`;
 
-	try {
-		const response = await axios.get(
-			statusUrl,
-			{
-				headers: {
-					'Authorization': `Bearer ${apiKey}`
+	let retryCount = 0;
+
+	const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+	const makeRequest = async () => {
+		try {
+			const response = await axios.get(
+				statusUrl,
+				{
+					headers: {
+						'Authorization': `Bearer ${apiKey}`
+					}
 				}
+			);
+			return response.data.status;
+		} catch (error) {
+			// Check if it's a 504 error and we haven't exceeded max retries
+			if (error.response?.status === 504 && retryCount < maxRetries) {
+				retryCount++;
+				console.log(`Received 504 error, attempt ${retryCount} of ${maxRetries}. Retrying in ${retryDelay}ms ...`);
+
+				// Exponential backoff
+				const backoffDelay = retryDelay * Math.pow(2, retryCount - 1);
+				await delay(backoffDelay);
+
+				// Recursive retry
+				return makeRequest();
 			}
-		);
-		return response.data.status;
-	} catch (error) {
-		handleError(error);
-		throw error;
+
+			// If it's not a 504 error or we've exceeded retries, handle the error
+			handleError(error);
+			throw error;
+		}
 	}
+
+	return makeRequest();
 }
 
 /**
@@ -82,12 +130,14 @@ export const getJobStatus = async (apiKey, dataURL, jobId)  => {
  * @param {string} jobId - The ID of the job whose results is being retrieved.
  * @param {number} offset - The number of rows to skip for results pagination.
  * @param {number} limit - The number of rows to retrieve in the response.
+ * @param {number} maxRetries - Maximum number of retry attempts (default: 3)
+ * @param {number} retryDelay - Delay between retries in milliseconds (default: 2000)
  *
  * @returns {object} - The results data of the job, including rows and metadata.
  *
  * @throws {Error} - Throws an error if the results retrieval fails (e.g., network errors, invalid API key).
  */
-export const getJobResults = async (apiKey, dataURL, jobId, offset, limit)  => {
+export const getJobResults = async (apiKey, dataURL, jobId, offset, limit, maxRetries = 3, retryDelay = 2000)  => {
 	if (!jobId) {
 		console.log("Error: jobId is required in getJobStatus");
 		return;
@@ -96,24 +146,46 @@ export const getJobResults = async (apiKey, dataURL, jobId, offset, limit)  => {
 	let resultsUrl = `${dataURL}/job/${jobId}/results`;
 	console.log(`resultsUrl: ${resultsUrl} | offset: ${offset} | limit: ${limit}`);
 
-	try {
-		const response = await axios.get(
-			resultsUrl,
-			{
-				headers: {
-					'Authorization': `Bearer ${apiKey}`
-				},
-				params: {
-					offset,
-					limit
+	let retryCount = 0;
+
+	const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+	const makeRequest = async () => {
+		try {
+			const response = await axios.get(
+				resultsUrl,
+				{
+					headers: {
+						'Authorization': `Bearer ${apiKey}`
+					},
+					params: {
+						offset,
+						limit
+					}
 				}
+			);
+			return response.data;
+		} catch (error) {
+			// Check if it's a 504 error and we haven't exceeded max retries
+			if (error.response?.status === 504 && retryCount < maxRetries) {
+				retryCount++;
+				console.log(`Received 504 error, attempt ${retryCount} of ${maxRetries}. Retrying in ${retryDelay}ms ...`);
+
+				// Exponential backoff
+				const backoffDelay = retryDelay * Math.pow(2, retryCount - 1);
+				await delay(backoffDelay);
+
+				// Recursive retry
+				return makeRequest();
 			}
-		);
-		return response.data;
-	} catch (error) {
-		handleError(error);
-		throw error;
+
+			// If it's not a 504 error or we've exceeded retries, handle the error
+			handleError(error);
+			throw error;
+		}
 	}
+
+	return makeRequest();
 }
 
 /**
