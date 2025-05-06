@@ -76,7 +76,46 @@ Before starting the app, you need to set the following variables in the `app.py`
      limit = 500  # Maximum rows per request (default is 500)
      ```
 
-Make sure to adjust these variables according to the data you're interested in exporting.
+Make sure to adjust these variables according to the data you're interested in exporting. The following parameters are passed to the `create_export_job` function:
+
+```python
+data = {
+    "activity": category["activity"],
+    "movement": category["movement"],
+    "start_time": start_time,
+    "end_time": end_time,
+    "date_mode": date_mode
+}
+```
+
+The `create_export_job` function also supports additional data filtering options through the following optional parameters:
+
+- `athletes`: Filter data by specific athlete IDs
+- `metrics`: Limit the export to specific metrics
+- `row_filter_column`: Specify a column to filter rows
+
+For more details, please refer to the [API Reference](https://docs.uplift.ai/api-reference/data/export/create).
+
+Here is an example that includes these optional parameters:
+
+```python
+data = {
+    "activity": category["activity"],
+    "movement": category["movement"],
+    "start_time": start_time,
+    "end_time": end_time,
+    "date_mode": date_mode,
+    "athletes": [
+        "athlete_id1",
+        "athlete_id2"
+    ],
+    "metrics": [
+        "metric1",
+        "metric2"
+    ],
+    "row_filter_column": "column_name"
+}
+```
 
 ### Starting the App
 Once you've installed the dependencies, set up the API key, and configured the variables in `app.py`, you can start the app by running the following command in your terminal:

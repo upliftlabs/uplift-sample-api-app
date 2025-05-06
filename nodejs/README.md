@@ -5,7 +5,7 @@ This is a simple sample app that shows how you can use the Uplift APIs with Node
 ## Prerequisites
 ### Installing Node.js
 
-To run this sample app, you’ll need Node.js installed on your system.
+To run this sample app, you'll need Node.js installed on your system.
 
 1. **Minimum Node.js Version**: The application requires Node.js **16 or higher**.
 2. **Where to Download Node.js**:
@@ -77,8 +77,46 @@ Before starting the app, you need to set the following variables in the `app.js`
       let limit = 500; // Maximum rows per request (default is 500)
       ```
 
-Make sure to adjust these variables according to the data you're interested in exporting.
+Make sure to adjust these variables according to the data you're interested in exporting. The following parameters are passed to the `createExportJob` function:
 
+```javascript
+const data = {
+  activity: category.activity,
+  movement: category.movement,
+  startTime,
+  endTime,
+  dateMode
+};
+```
+
+The `createExportJob` function also supports additional data filtering options through the following optional parameters:
+
+- `athletes`: Filter data by specific athlete IDs
+- `metrics`: Limit the export to specific metrics
+- `row_filter_column`: Specify a column to filter rows
+
+For more details, please refer to the [API Reference](https://docs.uplift.ai/api-reference/data/export/create).
+
+Here is an example that includes these optional parameters:
+
+```javascript
+const data = {
+  activity: category.activity,
+  movement: category.movement,
+  startTime,
+  endTime,
+  dateMode,
+  athletes: [
+    "athlete_id1",
+    "athlete_id2"
+  ],
+  metrics: [
+    "metric1",
+    "metric2"
+  ],
+  row_filter_column: "column_name"
+};
+```
 
 ### Starting the App
 Once you've installed the dependencies, set up the API key, and configured the variables in `app.js`, you can start the app by running the following command in your terminal:
